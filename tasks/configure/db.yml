@@ -20,9 +20,12 @@
 - name: Config | Create database config
   command: |
     {{ clickhouse_connection_string }}
-    -q 'CREATE DATABASE IF NOT EXISTS `{{ item.name }}`
-    {% if item.cluster is defined %}ON CLUSTER `{{ item.cluster }}`{% endif %}
-    {% if item.engine is defined %}ENGINE = {{ item.engine }}{% endif %}'
+    -q "CREATE DATABASE IF NOT EXISTS {{ item.name }}
+    {% if item.cluster is defined %}ON CLUSTER {{ item.cluster }}{% endif %}
+    {% if item.engine is defined %} ENGINE = {{ item.engine  }} (
+    '{{ item.connect_ip }}:{{ item.connect_port }}' ,
+    {{ item.connect_name }}, {{ item.connect_user }}, {{ item.connect_password }}
+    ){% endif %}"
   with_items: "{{ clickhouse_dbs }}"
   when: (item.state is undefined or item.state == 'present') and item.name not in existing_databases.stdout_lines
   tags: [config_db]
